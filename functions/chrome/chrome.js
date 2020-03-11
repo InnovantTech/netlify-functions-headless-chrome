@@ -20,9 +20,7 @@ exports.handler = async (event, context, callback) => {
     const targetUrl = 'https://davidwells.io'
 
     // Goto page and then do stuff
-    await page.goto(targetUrl, {
-      waitUntil: ["domcontentloaded", "networkidle0"]
-    })
+    await page.goto(targetUrl, {waitUntil: 'load', timeout: 0})
 
     await page.waitForSelector('#phenomic')
 
