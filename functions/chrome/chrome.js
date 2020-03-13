@@ -1,50 +1,31 @@
 const chromium = require('chrome-aws-lambda')
 const puppeteer = require('puppeteer-core')
 
-exports.handler = async (event, context, callback) => {
-  let theTitle = null
-  let browser = null
-  console.log('spawning chrome headless')
-  try {
+exports.handler = async (event, context) => {
+
+    const pageToScreenshot = JSON.parse(event.body).pageToScreenshot;
+
     const browser = await chromium.puppeteer.launch({
         executablePath: await chromium.executablePath,
         args: chromium.args,
         defaultViewport: chromium.defaultViewport,
         headless: chromium.headless,
     });
+    
+    const page = await browser.newPage();
 
-    // Do stuff with headless chrome
-    const page = await browser.newPage()
-    const targetUrl = 'https://davidwells.io'
+    await page.goto(pageToScreenshot);
 
-    // Goto page and then do stuff
-    await page.goto(targetUrl)
+    const screenshot = await page.screenshot({ encoding: 'binary' });
 
-    await page.waitForSelector('#phenomic')
-
-    theTitle = await page.title();
-
-    console.log('done on page', theTitle)
-
-  } catch (error) {
-    console.log('error', error)
-    return callback(null, {
-      statusCode: 500,
-      body: JSON.stringify({
-        error: error
-      })
-    })
-  } finally {
-    // close browser
-    if (browser !== null) {
-      await browser.close()
+    await browser.close();
+  
+    return {
+        statusCode: 200,
+        body: JSON.stringify({ 
+            message: `Complete screenshot of ${pageToScreenshot}`, 
+            buffer: screenshot 
+        })
     }
-  }
 
-  return callback(null, {
-    statusCode: 200,
-    body: JSON.stringify({
-      title: theTitle,
-    })
-  })
 }
